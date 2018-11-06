@@ -147,7 +147,7 @@ if __name__ == '__main__':
     file_list = wider_face['file_list']
     del wider_face
 
-    Path = 'Path to the images of WIDER FACE'
+    Path = 'WIDER_train/'
     save_path = './sfd_test_code/WIDER_FACE/eval_tools_old-version/sfd' + '_' + subset + '/'
     for index, event in enumerate(event_list):
         filelist = file_list[index][0]
