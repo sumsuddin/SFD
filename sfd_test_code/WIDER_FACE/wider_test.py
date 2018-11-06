@@ -132,7 +132,7 @@ def write_to_txt(f, det):
 
 if __name__ == '__main__':
 
-    caffe.set_device(3)
+    caffe.set_device(0)
     caffe.set_mode_gpu()
     model_def = 'models/VGGNet/WIDER_FACE/SFD_trained/deploy.prototxt'
     model_weights = 'models/VGGNet/WIDER_FACE/SFD_trained/SFD.caffemodel'
