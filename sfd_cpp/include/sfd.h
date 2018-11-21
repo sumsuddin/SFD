@@ -27,9 +27,9 @@ namespace sfd {
 	  std::vector<Detection> detect(const cv::Mat& img, const float threshold=0.5);
 
 	 private:
-	  void SetMean(const string& mean_file);
-	  void Preprocess(const cv::Mat& img,
-	                  std::vector<cv::Mat>* input_channels);
+
+      void set_input_buffer(std::vector<cv::Mat>& input_channels, float* input_data, const int height, const int width);
+	  //void Preprocess(const cv::Mat& img, std::vector<cv::Mat>* input_channels);
 
 	 private:
 	  shared_ptr<Net<float> > net_;

@@ -1,0 +1,5 @@
+.idea/
+images/
+models/
+sfd_cpp/build/
+sfd_cpp/cmake-build-debug/

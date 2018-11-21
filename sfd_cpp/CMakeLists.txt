@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.1)
+
+set (CMAKE_CXX_STANDARD 11)
 
 find_package(Caffe)
 include_directories(${Caffe_INCLUDE_DIRS} include)

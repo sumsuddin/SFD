@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "include/sfd.h"
 
 using namespace sfd;
@@ -28,7 +30,7 @@ SFD::SFD(const string& model_file,
 }
 
 
-void set_input_buffer(std::vector<cv::Mat>& input_channels,
+void SFD::set_input_buffer(std::vector<cv::Mat>& input_channels,
     float* input_data, const int height, const int width) {
   for (int i = 0; i < 3; ++i) {
     cv::Mat channel(height, width, CV_32FC1, input_data);
@@ -65,18 +67,47 @@ std::vector<Detection> SFD::detect(const cv::Mat& image, float threshold) {
 
   int num_preds = reg->shape(2);
   int num_features =reg->shape(3);
+  CHECK_EQ(num_features, 7) << "The model should predict exactly 7 features.";
+
   const float *pred_data = reg->cpu_data();
 
+  std::vector<Detection> detections;
   for (int i = 0; i < num_preds; i++) {
     float det_conf = pred_data[(num_features * i) + 2];
-    std::cout << det_conf << std::endl;
+    float x_min = pred_data[(num_features * i) + 3];
+    float y_min = pred_data[(num_features * i) + 4];
+    float x_max = pred_data[(num_features * i) + 5];
+    float y_max = pred_data[(num_features * i) + 6];
+    if (threshold < det_conf) {
+      Detection detection(det_conf, x_min, y_min, x_max, y_max);
+      detections.push_back(detection);
+    }
   }
-
-  std::cout << num_preds << " " << num_features << std::endl;
-
-  //std::vector<float> output = Predict(img);
-  std::vector<Detection> detections;
   return detections;
+}
+
+cv::Mat draw_detections(cv::Mat &img, std::vector<Detection> detections) {
+  cv::Mat visuallized = img.clone();
+
+  int width = visuallized.cols;
+  int height = visuallized.rows;
+
+  for (auto detection : detections) {
+    int xmin = int(detection.get_xmin() * (float)width);
+    int ymin = int(detection.get_ymin() * (float)height);
+    int xmax = int(detection.get_xmax() * (float)width);
+    int ymax = int(detection.get_ymax() * (float)height);
+    cv::rectangle(visuallized,
+            cv::Point(xmin, ymin),
+            cv::Point(xmax, ymax),
+            cv::Scalar(255, 0, 0));
+  }
+  return visuallized;
+}
+
+string get_filename(string path) {
+    std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
+    return base_filename;
 }
 
 int main(int argc, char** argv) {
@@ -85,13 +116,23 @@ int main(int argc, char** argv) {
 
   SFD sfd(model_file, trained_file);
 
-  string file = "../../faces.jpg";
+  std::vector<string> files;
+  cv::glob("../../images/*.jpg", files, false);
 
-  std::cout << "---------- Face detection for "
-            << file << " ----------" << std::endl;
+  for (auto file : files) {
+    std::cout << "---------- Face detection for "
+              << file << " ----------" << std::endl;
 
-  cv::Mat img = cv::imread(file, -1);
-  CHECK(!img.empty()) << "Unable to decode image " << file;
-  std::vector<Detection> detections = sfd.detect(img);
+    cv::Mat img = cv::imread(file, -1);
+    CHECK(!img.empty()) << "Unable to decode image " << file;
+    auto t_start = std::chrono::high_resolution_clock::now();
+    std::vector<Detection> detections = sfd.detect(img);
+    auto t_end = std::chrono::high_resolution_clock::now();
+    std::cout << "Required time: " << std::chrono::duration<double, std::milli>(t_end-t_start).count() << std::endl;
+    cv::Mat visualized = draw_detections(img, detections);
+    cv::imwrite(get_filename(file), visualized);
+  }
+
+  return 0;
 }
  
